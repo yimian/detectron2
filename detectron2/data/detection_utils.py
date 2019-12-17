@@ -235,6 +235,11 @@ def annotations_to_instances(annos, image_size, mask_format="polygon"):
     classes = [obj["category_id"] for obj in annos]
     classes = torch.tensor(classes, dtype=torch.int64)
     target.gt_classes = classes
+    
+    if 'aux_category_id' in annos[0]:
+        aux_classes = [obj["aux_category_id"] for obj in annos]
+        aux_classes = torch.tensor(aux_classes, dtype=torch.int64)
+        target.gt_aux_classes = aux_classes
 
     if len(annos) and "segmentation" in annos[0]:
         polygons = [obj["segmentation"] for obj in annos]
