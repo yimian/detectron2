@@ -736,7 +736,7 @@ class StandardROIHeadsV2(ROIHeads):
         pooler_scales     = tuple(1.0 / self.feature_strides[k] for k in self.in_features)
         sampling_ratio    = cfg.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
         pooler_type       = cfg.MODEL.ROI_BOX_HEAD.POOLER_TYPE
-        num_classes_aux   = cfg.MODEL.ROT_HEADS.NUM_CLASSES_AUX
+        num_classes_aux   = cfg.MODEL.ROI_HEADS.NUM_CLASSES_AUX
         # fmt: on
 
         # If StandardROIHeads is applied on multiple feature maps (as in FPN),

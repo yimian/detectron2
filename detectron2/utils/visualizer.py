@@ -335,6 +335,13 @@ class Visualizer:
         scores = predictions.scores if predictions.has("scores") else None
         classes = predictions.pred_classes if predictions.has("pred_classes") else None
         labels = _create_text_labels(classes, scores, self.metadata.get("thing_classes", None))
+
+        classes_aux = predictions.pred_classes_aux if predictions.has("pred_classes_aux") else None
+        scores_aux = predictions.scores_aux if predictions.has("pred_classes_aux") else None
+        if classes_aux is not None and self.metadata.get("aux_thing_classes", None) is not None:
+            labels_aux = _create_text_labels(classes_aux, scores_aux, self.metadata.get("aux_thing_classes", None))
+            labels = [ f'{i.split()[0]}-{j[0]}' for i, j in zip(labels, labels_aux)]
+
         keypoints = predictions.pred_keypoints if predictions.has("pred_keypoints") else None
 
         if predictions.has("pred_masks"):
@@ -489,9 +496,13 @@ class Visualizer:
             boxes = [BoxMode.convert(x["bbox"], x["bbox_mode"], BoxMode.XYXY_ABS) for x in annos]
 
             labels = [x["category_id"] for x in annos]
+            aux_labels = [x["aux_category_id"] for x in annos]
             names = self.metadata.get("thing_classes", None)
+            aux_names = self.metadata.get("aux_thing_classes", None)
             if names:
                 labels = [names[i] for i in labels]
+            if aux_names and aux_labels:
+                labels = [i+'-'+aux_names[a] for i, a in zip(labels, aux_labels)]
             labels = [
                 "{}".format(i) + ("|crowd" if a.get("iscrowd", 0) else "")
                 for i, a in zip(labels, annos)

@@ -92,22 +92,27 @@ def fast_rcnn_inference_single_image(
     """
     scores = scores[:, :-1]
     num_bbox_reg_classes = boxes.shape[1] // 4
+    # print('num_bbox_reg_classes', num_bbox_reg_classes)
     # Convert to Boxes to use the `clip` function ...
     boxes = Boxes(boxes.reshape(-1, 4))
     boxes.clip(image_shape)
-    boxes = boxes.tensor.view(-1, num_bbox_reg_classes, 4)  # R x C x 4
+
+    source_boxes = boxes.tensor.view(-1, num_bbox_reg_classes, 4)  # R x C x 4
 
     # Filter results based on detection scores
     filter_mask = scores > score_thresh  # R x K
     # R' x 2. First column contains indices of the R predictions;
     # Second column contains indices of classes.
+    # print('main filter mask', filter_mask.shape)
     filter_inds = filter_mask.nonzero()
+    # print('main filter inds', score_thresh, filter_inds.shape, filter_inds[:5,:])
     if num_bbox_reg_classes == 1:
-        boxes = boxes[filter_inds[:, 0], 0]
+        boxes = source_boxes[filter_inds[:, 0], 0]
     else:
-        boxes = boxes[filter_mask]
+        # 只留下score合要求的box
+        boxes = source_boxes[filter_mask]
     scores = scores[filter_mask]
-
+    # print('scores', scores.shape, 'boxes', boxes.shape, 'filter ind', filter_inds.shape, 'nms ', nms_thresh)
     # Apply per-class NMS
     keep = batched_nms(boxes, scores, filter_inds[:, 1], nms_thresh)
     if topk_per_image >= 0:
@@ -117,28 +122,45 @@ def fast_rcnn_inference_single_image(
     result.pred_boxes = Boxes(boxes)
     result.scores = scores
     result.pred_classes = filter_inds[:, 1]
+    # print('result', result)
 
     if scores_aux is not None:
         # 当存在aux_score 计算其对应的box和class结果
         scores_aux = scores_aux[:, :-1]
+        # 把main class的有效列全部挑出来
+        filter_inds_aux = filter_mask.nonzero()[:, 0]
+        print('score aux', scores_aux.shape)
+
+        scores_aux = scores_aux[filter_inds_aux, :]
+        source_boxes = source_boxes[:, :scores_aux.shape[-1], :]
 
         filter_mask_aux = scores_aux > score_thresh  # R x K
+        print('aux filter mask', filter_mask_aux.shape)
+
         # R' x 2. First column contains indices of the R predictions;
         # Second column contains indices of classes.
-        filter_inds_aux = filter_mask_aux.nonzero()
-        if num_bbox_reg_classes == 1:
-            boxes = boxes[filter_inds_aux[:, 0], 0]
-        else:
-            boxes = boxes[filter_mask_aux]
-        scores_aux = scores_aux[filter_mask_aux]
+        # filter_inds_aux = filter_mask_aux.nonzero()
+        # print('source_aux', scores_aux.shape)
+        # print('source box', source_boxes.shape)
+        # if num_bbox_reg_classes == 1:
+        #     boxes = source_boxes[filter_inds_aux[:, 0], 0]
+        # else:
+        #     # 只留下score合要求的box
+        #     boxes = source_boxes[filter_mask_aux]
+        # scores_aux = scores_aux[filter_mask_aux]
 
-        keep = batched_nms(boxes, scores_aux, filter_inds_aux[:, 1], nms_thresh)
-        if topk_per_image >= 0:
-            keep = keep[:topk_per_image]
-        boxes, scores_aux, filter_inds_aux = boxes[keep], scores_aux[keep], filter_inds_aux[keep]
+        # Apply per-class NMS
+        # keep = batched_nms(boxes, scores_aux, filter_inds_aux[:, 1], nms_thresh)
+        # if topk_per_image >= 0:
+        #     keep = keep[:topk_per_image]
+        # print('keep', keep.shape, topk_per_image)
+        scores_aux = scores_aux[keep]
+        # print('scores_aux', scores_aux)
+        print('**********')
+        # 这里aux的keep不能沿用, 而应该是box的沿用
+        scores_aux, pred_classes_aux = torch.max(scores_aux, dim=1)
         result.scores_aux = scores_aux
-        result.pred_boxes_aux = Boxes(boxes)
-        result.pred_classes_aux = filter_inds_aux[:, 1]
+        result.pred_classes_aux = pred_classes_aux
 
     return result, filter_inds[:, 0]
 
