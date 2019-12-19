@@ -340,7 +340,7 @@ class Visualizer:
         scores_aux = predictions.scores_aux if predictions.has("pred_classes_aux") else None
         if classes_aux is not None and self.metadata.get("aux_thing_classes", None) is not None:
             labels_aux = _create_text_labels(classes_aux, scores_aux, self.metadata.get("aux_thing_classes", None))
-            labels = [ f'{i.split()[0]}-{j[0]}' for i, j in zip(labels, labels_aux)]
+            labels = [ f'{i.split()[0]}-{j.split()[0]}' for i, j in zip(labels, labels_aux)]
 
         keypoints = predictions.pred_keypoints if predictions.has("pred_keypoints") else None
 
