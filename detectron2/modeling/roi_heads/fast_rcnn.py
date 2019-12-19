@@ -371,6 +371,7 @@ class FastRCNNOutputLayers(nn.Module):
 
 class FastRCNNOutputsV2(object):
     """
+    和 FastRCNNOutputsLayersV2 进行配合, 输出两个分类层和一个box回归层的损失
     A class that stores information about outputs of a Fast R-CNN head.
     """
 
@@ -570,9 +571,10 @@ class FastRCNNOutputsV2(object):
 
 class FastRCNNOutputLayersV2(nn.Module):
     """
-    Two linear layers for predicting Fast R-CNN outputs:
+    Three linear layers for predicting Fast R-CNN outputs:
       (1) proposal-to-detection box regression deltas
       (2) classification scores
+      (3) aux classification scores
     """
 
     def __init__(self, input_size, num_classes_1, num_classes_2,  cls_agnostic_bbox_reg, box_dim=4):

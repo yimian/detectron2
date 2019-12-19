@@ -714,6 +714,7 @@ class StandardROIHeads(ROIHeads):
 @ROI_HEADS_REGISTRY.register()
 class StandardROIHeadsV2(ROIHeads):
     """
+    在StandardROIHeads基础上新增class分类层用于支持两种类型的分类任务
     It's "standard" in a sense that there is no ROI transform sharing
     or feature sharing between tasks.
     The cropped rois go to separate branches (boxes and masks) directly.
